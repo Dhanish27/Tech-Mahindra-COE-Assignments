@@ -12,8 +12,16 @@ public class InventoryManager {
     private PriorityQueue<Order> orderQueue; // Priority queue for orders
 
     public InventoryManager() {
+
+        /*
+         * Its initialized in Constructor because the memory gets allocated only when
+         * object created
+         */
         products = new ConcurrentHashMap<>();
-        orderQueue = new PriorityQueue<>(new OrderComparator()); // Initialize order queue
+        orderQueue = new PriorityQueue<>(new OrderComparator()/*
+                                                               * uses overriden method from the user defined class
+                                                               * OrderComparator to find the priority of the orders
+                                                               */);
     }
 
     public synchronized void addProduct(Product product) {
@@ -21,9 +29,8 @@ public class InventoryManager {
             products.put(product.getProductID(), product);
             System.out.println("Product added: " + product.getName());
         } else {
-            System.out.println("Product already exists! Updating stock...");
-            Product existingProduct = products.get(product.getProductID());
-            existingProduct.setQuantity(existingProduct.getQuantity() + product.getQuantity());
+            System.out.println("Product already exists!");
+            return;
         }
     }
 
@@ -49,6 +56,9 @@ public class InventoryManager {
     }
 
     public void processOrders() {
+        /* ExecutorService is used to store threadpool instance and 
+        Executors.newFixedThreadPool() contains factory method to create thread of given size and create 
+        a thread pool */
         ExecutorService executor = Executors.newFixedThreadPool(5); // Thread pool with 5 threads
 
         while (!orderQueue.isEmpty()) {
@@ -64,12 +74,7 @@ public class InventoryManager {
              * put the main threads to stop working until the worker threads get processed
              */
             executor.awaitTermination(Long.MAX_VALUE /* wait until all the worker thread get processed */,
-                    TimeUnit.NANOSECONDS/* periodic time period where it checks whether all threads are processed */); // Wait
-                                                                                                                       // for
-                                                                                                                       // all
-                                                                                                                       // tasks
-                                                                                                                       // to
-                                                                                                                       // finish
+                    TimeUnit.NANOSECONDS/* periodic time period where it checks whether all threads are processed */); // finish
         } catch (InterruptedException e) {
             /*
              * if any thread is interrupted the below method does not cause run time error
